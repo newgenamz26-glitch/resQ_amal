@@ -559,19 +559,36 @@
 
         window.onload = () => window.render();
     </script>
-    <script>
-fetch('/update.json')
-  .then(res => res.json())
-  .then(data => {
+ <script>
+(async () => {
+  try {
+    const res = await fetch('/resQ_amal/update.json?ts=' + Date.now());
+    if (!res.ok) return;
+
+    const data = await res.json();
     const lastVersion = localStorage.getItem('siteVersion');
+
     if (lastVersion !== data.version) {
       const banner = document.getElementById('update-banner');
-      banner.innerText = data.message;
-      banner.style.cssText =
-        'background:#eaf4ff;padding:12px;text-align:center;font-weight:bold;';
+      banner.innerHTML = `
+        <div style="
+          background:#eaf4ff;
+          padding:12px;
+          text-align:center;
+          font-weight:800;
+          font-size:12px;
+          border-bottom:2px solid #3b82f6;">
+          🔄 ${data.message}
+        </div>
+      `;
       localStorage.setItem('siteVersion', data.version);
     }
-  });
+  } catch (e) {
+    console.log('Update check skipped');
+  }
+})();
 </script>
+
+
 </body>
 </html>
