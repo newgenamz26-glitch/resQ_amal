@@ -1,0 +1,107 @@
+📢 Website Version Notification Update Guide
+
+(For GitHub Pages & Static Websites)
+
+📘 Overview
+
+This guide explains how to show a notification on your website whenever the repository code changes.
+It is ideal for GitHub Pages and other static websites.
+
+You will learn:
+
+Simple manual version notifications
+
+Automatic update detection using GitHub
+
+Best practices for clean UI notifications
+
+🧩 Method 1: Manual Version Notification (Simple & Reliable)
+🔹 How It Works
+
+You store version info in a file (update.json)
+
+JavaScript checks the version
+
+A notification appears when the version changes
+
+📁 Step 1: Create update.json
+{
+  "version": "1.0.1",
+  "message": "🚀 New update available! Please refresh the page."
+}
+
+🧠 Step 2: Add HTML
+<div id="update-banner"></div>
+
+⚙️ Step 3: Add JavaScript
+<script>
+fetch('/update.json')
+  .then(res => res.json())
+  .then(data => {
+    const lastVersion = localStorage.getItem('siteVersion');
+
+    if (lastVersion !== data.version) {
+      const banner = document.getElementById('update-banner');
+      banner.innerText = data.message;
+      banner.style.cssText =
+        'background:#eaf4ff;padding:12px;text-align:center;font-weight:bold;';
+      localStorage.setItem('siteVersion', data.version);
+    }
+  });
+</script>
+
+✅ Advantages
+
+✔ Works on GitHub Pages
+✔ No backend required
+✔ Easy to customize
+
+🔄 Method 2: Automatic Notification via GitHub API
+🔹 How It Works
+
+JavaScript checks the latest GitHub commit
+
+Shows notification if commit changes
+
+🧠 JavaScript Code
+<script>
+const repo = "USERNAME/REPOSITORY";
+
+fetch(`https://api.github.com/repos/${repo}/commits/main`)
+  .then(res => res.json())
+  .then(data => {
+    const commit = data.sha;
+    const stored = localStorage.getItem('lastCommit');
+
+    if (commit !== stored) {
+      alert("🔔 Site updated! Refresh to see changes.");
+      localStorage.setItem('lastCommit', commit);
+    }
+  });
+</script>
+
+⚠️ Notes
+
+Subject to GitHub API rate limits
+
+Best for low-traffic sites
+
+🎨 UI Enhancement (Optional)
+Example Notification Style
+#update-banner {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background: #fffbcc;
+  color: #000;
+  padding: 10px;
+  text-align: center;
+  z-index: 1000;
+}
+
+🧪 Best Practices
+
+✔ Use clear messages
+✔ Keep notifications non-blocking
+✔ Save version info in localStorage
+✔ Avoid alerts for frequent updates
