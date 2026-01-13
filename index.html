@@ -1,1 +1,563 @@
-test
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resq-Link v5.5 Platinum (Local)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.3s ease; scroll-behavior: smooth; }
+        .animate-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .glass { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(16px); }
+        
+        .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: all 0.3s ease; }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal-box { background: white; width: 100%; max-width: 480px; border-radius: 32px; overflow: hidden; transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); max-height: 90vh; display: flex; flex-direction: column; }
+        .modal-overlay.show .modal-box { transform: scale(1); }
+        
+        .btn-action { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-action:active { transform: scale(0.96); }
+        
+        #toast-container { position: fixed; top: 80px; right: 20px; z-index: 1000; pointer-events: none; }
+        .toast { padding: 14px 24px; border-radius: 16px; background: #1e293b; color: white; font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 10px; transform: translateX(120%); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); border-left: 4px solid #3b82f6; }
+        .toast.show { transform: translateX(0); }
+        
+        .notification-dot { position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; background: #ef4444; border: 2px solid white; border-radius: 50%; display: none; }
+        .notification-dot.active { display: block; }
+
+        .loading-bar { height: 6px; background: #e2e8f0; border-radius: 10px; overflow: hidden; position: relative; }
+        .loading-progress { height: 100%; background: #3b82f6; width: 0%; transition: width 0.3s ease; }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-900">
+
+    <div id="toast-container"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="modal-overlay">
+        <div class="modal-box p-10 text-center">
+            <div class="w-24 h-24 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-8 animate-pulse">
+                <svg class="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+            </div>
+            <h3 class="font-extrabold italic uppercase text-xl mb-2">Memulakan Sesi...</h3>
+            <p id="loading-status-text" class="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-6">Membuka Hub LocalStorage</p>
+            <div class="loading-bar mb-4">
+                <div id="loading-bar-fill" class="loading-progress"></div>
+            </div>
+            <p id="loading-percent" class="font-black text-blue-600 text-2xl">0%</p>
+        </div>
+    </div>
+
+    <!-- PIC Confirmation Modal -->
+    <div id="pic-modal" class="modal-overlay">
+        <div class="modal-box p-8 text-center">
+            <div class="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+            </div>
+            <h3 class="font-extrabold italic uppercase text-2xl mb-2">Sahkan PIC</h3>
+            <p class="text-slate-500 text-sm font-medium mb-1">PIC Checkpoint anda ialah:</p>
+            <div class="bg-slate-50 p-4 rounded-2xl mb-8">
+                <p id="pic-display-name" class="font-black text-blue-600 uppercase italic">--</p>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="window.closePicModal()" class="bg-slate-100 text-slate-900 font-bold py-4 rounded-2xl uppercase text-xs btn-action">Kembali</button>
+                <button onclick="window.confirmStartDuty()" class="bg-blue-600 text-white font-bold py-4 rounded-2xl uppercase text-xs shadow-lg btn-action">Sahkan & Masuk</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exit Confirmation -->
+    <div id="confirm-modal" class="modal-overlay">
+        <div class="modal-box p-8 text-center">
+            <div class="w-20 h-20 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M17 16l4-4m0 0l-4-4m4 4H7" /></svg>
+            </div>
+            <h3 class="font-extrabold italic uppercase text-2xl mb-2">Tamat Tugas?</h3>
+            <p class="text-slate-500 text-sm font-medium mb-8">Sesi akan ditamatkan secara lokal.</p>
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="window.closeConfirm()" class="bg-slate-100 text-slate-900 font-bold py-4 rounded-2xl uppercase text-xs btn-action">Batal</button>
+                <button onclick="window.executeDutyExit()" class="bg-rose-600 text-white font-bold py-4 rounded-2xl uppercase text-xs shadow-lg btn-action">Tamat Sesi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail/Edit Popup -->
+    <div id="detail-modal" class="modal-overlay">
+        <div class="modal-box shadow-2xl">
+            <div class="bg-slate-900 p-6 text-white flex justify-between items-center">
+                <h3 id="detail-modal-title" class="font-extrabold italic uppercase text-sm tracking-wider">Laporan</h3>
+                <button onclick="document.getElementById('detail-modal').classList.remove('show')" class="bg-white/10 p-2 rounded-full">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto" id="modal-body-container">
+                <div id="detail-content-ui"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="app" class="min-h-screen flex flex-col">
+        <header class="fixed top-0 left-0 right-0 z-[100] px-6 py-4 flex justify-between items-center glass border-b border-slate-200/60">
+            <div class="flex items-center gap-4">
+                <div onclick="window.changeView('launcher')" class="bg-blue-600 p-2 rounded-xl text-white shadow-lg cursor-pointer btn-action">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                </div>
+                <div>
+                    <h1 class="font-extrabold italic uppercase text-sm tracking-tighter leading-none">Resq-Link <span class="text-blue-600">v5.5</span></h1>
+                    <div class="flex items-center gap-1.5 mt-1">
+                        <div class="w-2 h-2 rounded-full bg-amber-500"></div>
+                        <span class="text-[9px] font-bold uppercase text-slate-400">Offline Local Storage</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="window.changeView('admin')" class="bg-slate-100 p-2.5 rounded-xl text-slate-600 btn-action hover:bg-slate-200">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                </button>
+                <button onclick="window.changeView('mecc')" class="relative bg-slate-100 p-2.5 rounded-xl text-slate-600 btn-action hover:bg-blue-50 hover:text-blue-600">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    <div id="mecc-notify" class="notification-dot"></div>
+                </button>
+            </div>
+        </header>
+
+        <div id="content-area" class="flex-grow pt-24 pb-24"></div>
+    </div>
+
+    <!-- Template: Launcher -->
+    <script type="text/html" id="tpl-launcher">
+        <div class="max-w-md mx-auto p-6 animate-in text-center flex flex-col justify-center min-h-[70vh]">
+            <div class="mb-12">
+                <div class="w-24 h-24 bg-blue-600 text-white rounded-[2.5rem] flex items-center justify-center mx-auto mb-6 shadow-2xl">
+                    <svg class="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                </div>
+                <h2 class="text-4xl font-extrabold italic tracking-tighter uppercase mb-2">Resq<span class="text-blue-600">Link</span></h2>
+                <p class="text-[11px] font-bold uppercase text-slate-400 tracking-widest italic">Hub Penyimpanan Lokal</p>
+            </div>
+            <div class="grid gap-4">
+                <button onclick="window.handleDutyAction()" class="bg-white p-8 rounded-[3rem] shadow-xl border border-slate-100 btn-action flex items-center gap-6 text-left group">
+                    <div id="duty-icon-bg" class="bg-blue-50 p-5 rounded-[1.5rem] text-blue-600 transition-all">
+                        <svg id="duty-icon" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 4v16m8-8H4" /></svg>
+                    </div>
+                    <div>
+                        <h3 id="duty-title" class="font-extrabold italic uppercase text-xl">Mula Tugas</h3>
+                        <p id="duty-sub" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Daftar Sesi ke Storage</p>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </script>
+
+    <!-- Template: Auth -->
+    <script type="text/html" id="tpl-auth">
+        <div class="max-w-sm mx-auto p-6 animate-in">
+            <div class="bg-white p-8 rounded-[3.5rem] shadow-2xl border border-slate-100 space-y-8">
+                <div class="text-center">
+                    <h2 class="font-extrabold text-2xl uppercase italic tracking-tighter">Pendaftaran</h2>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">Sila lengkapkan info checkpoint</p>
+                </div>
+                <div class="space-y-4">
+                    <input id="auth-name" class="w-full bg-slate-50 rounded-2xl px-6 py-4 text-sm font-bold border border-transparent focus:border-blue-200 outline-none" placeholder="Nama Petugas" />
+                    <input id="auth-cp" class="w-full bg-slate-50 rounded-2xl px-6 py-4 text-sm font-bold border border-transparent focus:border-blue-200 outline-none" placeholder="ID Checkpoint (Contoh: CP01)" />
+                    <input id="auth-prog" class="w-full bg-slate-50 rounded-2xl px-6 py-4 text-sm font-bold border border-transparent focus:border-blue-200 outline-none" placeholder="Nama Program" />
+                    <div class="pt-4 space-y-3">
+                        <button onclick="window.initiateDuty()" class="w-full bg-slate-900 text-white font-extrabold py-5 rounded-2xl uppercase italic text-sm shadow-xl btn-action">Sahkan Pendaftaran</button>
+                        <button onclick="window.fillSampleAuth()" class="w-full text-[10px] font-bold uppercase text-blue-600">Guna Data Sampel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </script>
+
+    <!-- Template: Reporter -->
+    <script type="text/html" id="tpl-reporter">
+        <main class="max-w-xl mx-auto p-4 space-y-5 animate-in">
+            <div class="bg-blue-600/10 border border-blue-100 p-4 rounded-3xl flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></div>
+                    <p class="text-[10px] font-black uppercase text-blue-700 tracking-wider">Storage Lokal Aktif</p>
+                </div>
+                <span class="text-[10px] font-bold text-blue-500 uppercase px-3 py-1 bg-white rounded-full shadow-sm" id="sess-cp">CP00</span>
+            </div>
+
+            <div class="bg-slate-900 p-6 rounded-[2.5rem] text-white shadow-xl flex justify-between items-center">
+                <div>
+                    <h3 id="sess-name" class="text-xl font-extrabold italic uppercase leading-tight">Responder</h3>
+                    <p id="sess-prog" class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1 italic">Program</p>
+                </div>
+                <button onclick="window.openConfirm()" class="bg-rose-500 text-white p-3.5 rounded-2xl btn-action shadow-lg">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M17 16l4-4m0 0l-4-4m4 4H7" /></svg>
+                </button>
+            </div>
+
+            <div class="flex gap-4 px-4">
+                <button onclick="window.setReporterTab('form')" id="tab-rep-form" class="flex-1 py-3 text-[10px] font-black uppercase tracking-widest border-b-4 border-blue-600 text-blue-600 transition-all">Laporan Baharu</button>
+                <button onclick="window.setReporterTab('log')" id="tab-rep-log" class="flex-1 py-3 text-[10px] font-black uppercase tracking-widest border-b-4 border-transparent text-slate-400 transition-all">Log Kes Saya</button>
+            </div>
+
+            <div id="reporter-content-container">
+                <div id="rep-form-view" class="bg-white p-6 rounded-[3rem] shadow-sm border border-slate-100 space-y-6 animate-in">
+                    <div class="flex justify-between items-center">
+                        <h4 class="text-[11px] font-black uppercase text-slate-400 tracking-widest">Butiran Kes</h4>
+                        <button onclick="window.fillSampleCase()" class="bg-slate-100 text-slate-600 text-[10px] font-black px-4 py-2 rounded-xl uppercase btn-action">🪄 Auto-Fill</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <input id="f-date" type="date" class="w-full bg-slate-50 rounded-2xl px-5 py-3 text-xs font-bold border border-transparent" />
+                        <input id="f-time" type="time" class="w-full bg-slate-50 rounded-2xl px-5 py-3 text-xs font-bold border border-transparent" />
+                    </div>
+                    <input id="f-patient" class="w-full bg-slate-50 rounded-2xl px-6 py-4 text-sm font-bold outline-none border border-transparent focus:border-blue-100" placeholder="Nama Pesakit" />
+                    <textarea id="f-complaint" class="w-full bg-slate-50 rounded-2xl px-6 py-4 text-sm font-medium outline-none h-24 border border-transparent focus:border-blue-100" placeholder="Simptom / Aduan..."></textarea>
+                    <div class="grid grid-cols-4 gap-2">
+                        <input id="f-bp" class="bg-slate-50 rounded-xl py-3 text-center text-[10px] font-bold border border-transparent" placeholder="BP" />
+                        <input id="f-pr" class="bg-slate-50 rounded-xl py-3 text-center text-[10px] font-bold border border-transparent" placeholder="PR" />
+                        <input id="f-spo2" class="bg-slate-50 rounded-xl py-3 text-center text-[10px] font-bold border border-transparent" placeholder="SPO2" />
+                        <input id="f-bsl" class="bg-slate-50 rounded-xl py-3 text-center text-[10px] font-bold border border-transparent" placeholder="BSL" />
+                    </div>
+                    <button onclick="window.saveCase()" class="w-full bg-blue-600 text-white font-extrabold py-5 rounded-[2rem] uppercase italic text-sm shadow-xl btn-action">Simpan Laporan</button>
+                </div>
+
+                <div id="rep-log-view" class="hidden space-y-4 animate-in">
+                    <div id="responder-case-list" class="space-y-3"></div>
+                </div>
+            </div>
+        </main>
+    </script>
+
+    <!-- Template: MECC -->
+    <script type="text/html" id="tpl-mecc">
+        <main class="max-w-6xl mx-auto p-4 space-y-6 animate-in">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kes Masuk (Local)</p>
+                    <p id="mecc-total" class="text-3xl font-black italic">0</p>
+                </div>
+                <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Petugas Aktif</p>
+                    <p id="mecc-active" class="text-3xl font-black italic text-emerald-600">0</p>
+                </div>
+                <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 md:col-span-1 col-span-2">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Selesai Tugas</p>
+                    <p id="mecc-done" class="text-3xl font-black italic text-blue-600">0</p>
+                </div>
+            </div>
+
+            <div class="flex gap-6 border-b border-slate-200 px-6">
+                <button onclick="window.setMeccTab('shifts')" id="tab-btn-shifts" class="pb-4 text-[11px] font-extrabold uppercase tracking-widest border-b-4 transition-all">Log Petugas</button>
+                <button onclick="window.setMeccTab('cases')" id="tab-btn-cases" class="pb-4 text-[11px] font-extrabold uppercase tracking-widest border-b-4 transition-all">Semua Kes</button>
+            </div>
+
+            <div id="mecc-view-container" class="bg-white rounded-[3.5rem] p-6 shadow-xl min-h-[400px]">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead id="mecc-table-head" class="text-[10px] font-black text-slate-400 uppercase tracking-widest"></thead>
+                        <tbody id="mecc-table-body" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </script>
+
+    <!-- Template: Admin -->
+    <script type="text/html" id="tpl-admin">
+        <div class="max-w-md mx-auto p-6 animate-in">
+            <div class="bg-white p-8 rounded-[3rem] shadow-2xl border border-slate-100 space-y-8">
+                <div class="text-center">
+                    <h2 class="font-extrabold text-2xl uppercase italic tracking-tighter">Admin Local</h2>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">Pengurusan Data Browser</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="p-6 bg-blue-50 rounded-3xl border border-blue-100">
+                        <h4 class="text-xs font-black text-blue-600 uppercase mb-2">Export Data</h4>
+                        <button onclick="window.downloadLocalData()" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl uppercase text-[10px] shadow-lg btn-action">Download JSON Report</button>
+                    </div>
+
+                    <div class="p-6 bg-rose-50 rounded-3xl border border-rose-100">
+                        <h4 class="text-xs font-black text-rose-600 uppercase mb-2">Padam Kekal</h4>
+                        <button onclick="window.clearLocalData()" class="w-full bg-rose-600 text-white font-black py-4 rounded-2xl uppercase text-[10px] shadow-lg btn-action">Clear LocalStorage</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </script>
+
+    <script>
+        // PIC Database Mock
+        const picDatabase = { "CP01": "DR. ADNAN", "CP02": "SN HASANAH", "CP03": "MA FIRDAUS", "CP04": "DR. LUQMAN", "CP05": "DR. NURUL" };
+
+        // State Management
+        let currentView = 'launcher';
+        let reporterTab = 'form';
+        let meccTab = 'shifts';
+        
+        // Data Loaders from LocalStorage
+        const loadSess = () => JSON.parse(localStorage.getItem('resq_v5_current_session')) || null;
+        const loadShifts = () => JSON.parse(localStorage.getItem('resq_v5_all_shifts')) || [];
+        const loadCases = () => JSON.parse(localStorage.getItem('resq_v5_all_cases')) || [];
+
+        let session = loadSess();
+        let allShifts = loadShifts();
+        let allCases = loadCases();
+
+        // Data Savers
+        const saveAll = () => {
+            localStorage.setItem('resq_v5_current_session', JSON.stringify(session));
+            localStorage.setItem('resq_v5_all_shifts', JSON.stringify(allShifts));
+            localStorage.setItem('resq_v5_all_cases', JSON.stringify(allCases));
+        };
+
+        window.render = () => {
+            const container = document.getElementById('content-area');
+            const tpl = document.getElementById(`tpl-${currentView}`);
+            if(!tpl) return;
+            container.innerHTML = tpl.innerHTML;
+
+            if(currentView === 'launcher' && session) {
+                const title = document.getElementById('duty-title');
+                const iconBg = document.getElementById('duty-icon-bg');
+                if(title) title.innerText = "Tugasan Aktif";
+                if(iconBg) iconBg.className = "bg-emerald-500 p-5 rounded-[1.5rem] text-white shadow-lg shadow-emerald-500/20";
+            }
+
+            if(currentView === 'reporter' && session) {
+                document.getElementById('sess-cp').innerText = session.checkpoint;
+                document.getElementById('sess-name').innerText = session.responderName;
+                document.getElementById('sess-prog').innerText = session.programName;
+                window.setReporterTab(reporterTab);
+            }
+
+            if(currentView === 'mecc') {
+                document.getElementById('mecc-total').innerText = allCases.length;
+                document.getElementById('mecc-active').innerText = allShifts.filter(s => s.status === 'ON_DUTY').length;
+                document.getElementById('mecc-done').innerText = allShifts.filter(s => s.status !== 'ON_DUTY').length;
+
+                ['shifts', 'cases'].forEach(t => {
+                    const el = document.getElementById(`tab-btn-${t}`);
+                    if(el) el.className = meccTab === t 
+                        ? "pb-4 text-[11px] font-extrabold uppercase tracking-widest border-b-4 border-blue-600 text-blue-600"
+                        : "pb-4 text-[11px] font-extrabold uppercase tracking-widest border-b-4 border-transparent text-slate-400";
+                });
+
+                const tHead = document.getElementById('mecc-table-head');
+                const tBody = document.getElementById('mecc-table-body');
+
+                if(meccTab === 'shifts') {
+                    tHead.innerHTML = `<tr><th class="pb-6">Petugas</th><th class="pb-6">CP</th><th class="pb-6">Status</th><th class="pb-6 text-right">Aksi</th></tr>`;
+                    tBody.innerHTML = allShifts.map(s => `
+                        <tr class="text-[11px] font-bold">
+                            <td class="py-6"><div class="uppercase">${s.responderName}</div></td>
+                            <td><span class="bg-slate-100 px-2 py-1 rounded-lg">${s.checkpoint}</span></td>
+                            <td><span class="px-2 py-1 rounded-full text-[8px] font-black ${s.status==='ON_DUTY' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}">${s.status}</span></td>
+                            <td class="text-right"><button onclick="window.viewShiftDetail('${s.id}')" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase">Detail</button></td>
+                        </tr>`).join('');
+                } else {
+                    tHead.innerHTML = `<tr><th class="pb-6">Masa</th><th class="pb-6">Pesakit</th><th class="pb-6">Petugas</th><th class="pb-6 text-right">Aksi</th></tr>`;
+                    tBody.innerHTML = allCases.map(c => `
+                        <tr class="text-[11px] font-bold">
+                            <td class="py-6 text-slate-400">${c.timeStr}</td>
+                            <td><div class="uppercase">${c.patientName}</div></td>
+                            <td>${c.responderName}</td>
+                            <td class="text-right"><button onclick="window.viewCaseDetail('${c.id}')" class="bg-slate-100 text-slate-900 px-4 py-2 rounded-xl text-[9px] font-black uppercase">View</button></td>
+                        </tr>`).join('');
+                }
+            }
+        };
+
+        window.changeView = (v) => { currentView = v; window.render(); };
+        window.handleDutyAction = () => session ? window.changeView('reporter') : window.changeView('auth');
+        
+        window.initiateDuty = () => {
+            const cp = document.getElementById('auth-cp').value;
+            if(!cp) return window.showToast("Sila masukkan checkpoint.");
+            document.getElementById('pic-display-name').innerText = picDatabase[cp.toUpperCase()] || "Maklumat tiada dalam rekod";
+            document.getElementById('pic-modal').classList.add('show');
+        };
+
+        window.confirmStartDuty = () => {
+            document.getElementById('pic-modal').classList.remove('show');
+            document.getElementById('loading-overlay').classList.add('show');
+            let progress = 0;
+            const bar = document.getElementById('loading-bar-fill');
+            const perc = document.getElementById('loading-percent');
+            
+            const interval = setInterval(() => {
+                progress += 10;
+                if(progress >= 100) {
+                    clearInterval(interval);
+                    const data = {
+                        id: 'S-' + Date.now(),
+                        responderName: document.getElementById('auth-name').value,
+                        checkpoint: document.getElementById('auth-cp').value.toUpperCase(),
+                        programName: document.getElementById('auth-prog').value,
+                        shiftStart: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+                        status: 'ON_DUTY'
+                    };
+                    session = data;
+                    allShifts.push(data);
+                    saveAll();
+                    document.getElementById('loading-overlay').classList.remove('show');
+                    window.changeView('reporter');
+                    window.showToast("Sesi Lokal Bermula!");
+                }
+                bar.style.width = progress + "%";
+                perc.innerText = progress + "%";
+            }, 50);
+        };
+
+        window.saveCase = () => {
+            const p = document.getElementById('f-patient').value;
+            if(!p) return window.showToast("Nama Pesakit Wajib");
+            
+            const caseData = {
+                id: 'C-' + Date.now(),
+                patientName: p, 
+                timeStr: document.getElementById('f-time').value,
+                checkpoint: session.checkpoint, 
+                responderName: session.responderName,
+                vitals: { 
+                    bp: document.getElementById('f-bp').value, 
+                    pr: document.getElementById('f-pr').value, 
+                    spo2: document.getElementById('f-spo2').value, 
+                    bsl: document.getElementById('f-bsl').value 
+                },
+                complaint: document.getElementById('f-complaint').value
+            };
+
+            allCases.unshift(caseData);
+            saveAll();
+            window.showToast("Kes Disimpan ke Storage");
+            document.getElementById('f-patient').value = "";
+            document.getElementById('f-complaint').value = "";
+            window.render();
+        };
+
+        window.executeDutyExit = () => {
+            const shiftIdx = allShifts.findIndex(s => s.id === session.id);
+            if(shiftIdx > -1) {
+                allShifts[shiftIdx].status = 'OFF_DUTY';
+                allShifts[shiftIdx].shiftEnd = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            }
+            session = null;
+            saveAll();
+            document.getElementById('confirm-modal').classList.remove('show');
+            window.changeView('launcher');
+        };
+
+        window.setReporterTab = (t) => {
+            reporterTab = t;
+            const formView = document.getElementById('rep-form-view');
+            const logView = document.getElementById('rep-log-view');
+            if(t === 'form') {
+                formView.classList.remove('hidden'); logView.classList.add('hidden');
+                window.setCurrentTime();
+            } else {
+                formView.classList.add('hidden'); logView.classList.remove('hidden');
+                window.renderResponderCases();
+            }
+        };
+
+        window.renderResponderCases = () => {
+            const list = document.getElementById('responder-case-list');
+            const myCases = allCases.filter(c => c.responderName === session.responderName);
+            list.innerHTML = myCases.map(c => `
+                <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex justify-between items-center">
+                    <div>
+                        <p class="text-[9px] font-black text-blue-500 uppercase">${c.timeStr}</p>
+                        <h5 class="font-extrabold uppercase text-slate-800">${c.patientName}</h5>
+                    </div>
+                    <button onclick="window.viewCaseDetail('${c.id}')" class="bg-blue-600 text-white text-[9px] font-black px-4 py-2 rounded-xl uppercase">Detail</button>
+                </div>`).join('') || '<div class="text-center p-10 text-slate-400 font-bold uppercase text-[10px]">Tiada rekod kes</div>';
+        };
+
+        window.viewCaseDetail = (id) => {
+            const c = allCases.find(item => item.id === id);
+            if(!c) return;
+            document.getElementById('detail-modal-title').innerText = "DETAIL KES";
+            document.getElementById('detail-content-ui').innerHTML = `
+                <div class="space-y-4">
+                    <div class="bg-slate-50 p-4 rounded-2xl">
+                        <p class="text-[9px] uppercase font-black text-slate-400">Pesakit:</p><p class="font-bold text-lg">${c.patientName}</p>
+                        <p class="text-[9px] uppercase font-black text-slate-400 mt-2">Aduan:</p><p class="text-sm">${c.complaint}</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-blue-50 p-3 rounded-xl"><p class="text-[8px] font-black text-blue-400 uppercase">BP</p><p class="font-bold">${c.vitals?.bp || '--'}</p></div>
+                        <div class="bg-blue-50 p-3 rounded-xl"><p class="text-[8px] font-black text-blue-400 uppercase">PR</p><p class="font-bold">${c.vitals?.pr || '--'}</p></div>
+                    </div>
+                </div>`;
+            document.getElementById('detail-modal').classList.add('show');
+        };
+
+        window.viewShiftDetail = (id) => {
+            const s = allShifts.find(item => item.id === id);
+            if(!s) return;
+            document.getElementById('detail-modal-title').innerText = "DETAIL PETUGAS";
+            document.getElementById('detail-content-ui').innerHTML = `
+                <div class="space-y-6">
+                    <div class="bg-slate-50 p-5 rounded-3xl border border-slate-100">
+                        <h4 class="font-extrabold uppercase text-slate-800">${s.responderName}</h4>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase">${s.programName}</p>
+                    </div>
+                    <div class="space-y-4">
+                        <p class="text-xs font-bold">Mula: ${s.shiftStart} (CP: ${s.checkpoint})</p>
+                        <p class="text-xs font-bold">Tamat: ${s.shiftEnd || 'Aktif'}</p>
+                    </div>
+                </div>`;
+            document.getElementById('detail-modal').classList.add('show');
+        };
+
+        window.downloadLocalData = () => {
+            const data = { shifts: allShifts, cases: allCases, exportDate: new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `resq_report_${Date.now()}.json`;
+            a.click();
+        };
+
+        window.clearLocalData = () => {
+            if(confirm("Semua data akan dipadam kekal dari browser ini!")) {
+                localStorage.clear();
+                window.location.reload();
+            }
+        };
+
+        window.setCurrentTime = () => {
+            const now = new Date();
+            const d = document.getElementById('f-date');
+            const t = document.getElementById('f-time');
+            if(d) d.value = now.toISOString().split('T')[0];
+            if(t) t.value = now.toTimeString().split(':').slice(0,2).join(':');
+        };
+
+        window.fillSampleAuth = () => {
+            document.getElementById('auth-name').value = "Muhd Luqman";
+            document.getElementById('auth-cp').value = "CP04";
+            document.getElementById('auth-prog').value = "Larian Bendahara 2025";
+        };
+
+        window.fillSampleCase = () => {
+            document.getElementById('f-patient').value = "Ali Juhari";
+            document.getElementById('f-bp').value = "120/80";
+            document.getElementById('f-pr').value = "75";
+            document.getElementById('f-spo2').value = "99%";
+            document.getElementById('f-bsl').value = "5.5";
+            document.getElementById('f-complaint').value = "Luka ringan di lutut.";
+        };
+
+        window.showToast = (msg) => {
+            const container = document.getElementById('toast-container');
+            const el = document.createElement('div'); el.className = 'toast show'; el.innerText = msg;
+            container.appendChild(el);
+            setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 500); }, 3000);
+        };
+
+        window.openConfirm = () => document.getElementById('confirm-modal').classList.add('show');
+        window.closeConfirm = () => document.getElementById('confirm-modal').classList.remove('show');
+        window.closePicModal = () => document.getElementById('pic-modal').classList.remove('show');
+        window.setMeccTab = (t) => { meccTab = t; window.render(); };
+
+        window.onload = () => window.render();
+    </script>
+</body>
+</html>
