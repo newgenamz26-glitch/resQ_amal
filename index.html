@@ -32,7 +32,7 @@
     </style>
 </head>
 <body class="bg-[#f8fafc] text-slate-900">
-<div id="update-banner"></div> 
+    <div id="update-banner"></div> 
     <div id="toast-container"></div>
 
     <!-- Loading Overlay -->
@@ -564,7 +564,6 @@ fetch('/update.json')
   .then(res => res.json())
   .then(data => {
     const lastVersion = localStorage.getItem('siteVersion');
-
     if (lastVersion !== data.version) {
       const banner = document.getElementById('update-banner');
       banner.innerText = data.message;
