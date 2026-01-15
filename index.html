@@ -493,6 +493,7 @@ class="w-full bg-emerald-600 text-white font-extrabold py-4 rounded-[2rem] upper
                         shiftStart: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
                         status: 'ON_DUTY'
                     };
+                    window.showToast("Mula tugas");
                     session = data;
                     allShifts.push(data);
                     saveAll();
@@ -504,9 +505,6 @@ class="w-full bg-emerald-600 text-white font-extrabold py-4 rounded-[2rem] upper
                 perc.innerText = progress + "%";
             }, 50);
         };
-
-        
-            
             
         
             allCases.unshift(caseData);
@@ -541,7 +539,7 @@ class="w-full bg-emerald-600 text-white font-extrabold py-4 rounded-[2rem] upper
 
         window.renderResponderCases = () => {
             const list = document.getElementById('responder-case-list');
-            const myCases = allCases.filter(c => c.responderName === session.responderName);
+            const myCases = allCases.filter(c => c.program.responderName === session.responderName);
             list.innerHTML = myCases.map(c => `
                 <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex justify-between items-center">
                     <div>
@@ -695,11 +693,12 @@ window.calculateTreatmentDuration = () => {
 
 // Simpan laporan kes
 window.saveCase = () => {
+    <!-- if(!p) return window.showToast("Nama Pesakit Wajib"); -->
+    
     const data = {
         id: 'C-' + Date.now(),
-if(!p) return window.showToast("Nama Pesakit Wajib");
+
         program: {
-            responderIC: f('f-responder-ic'),
             responderName: f('f-responder-name'),
             programName: f('f-program'),
             checkpoint: f('f-checkpoint'),
@@ -753,7 +752,7 @@ window.shareCaseWhatsApp = () => {
     const msg = `
 🆘 *LAPORAN KES RESPONDER AMAL *
 
-👮 Responder: ${f('f-responder-name')} (${f('f-responder-ic')})
+👮 Responder: ${f('f-responder-name')} 
 📍 Program: ${f('f-program')} | CP ${f('f-checkpoint')}
 ⏰ Masa: ${f('f-datetime')}
 
@@ -767,15 +766,16 @@ BP ${f('f-bp')} | PR ${f('f-pr')}
 SpO2 ${f('f-spo2')} | RR ${f('f-rr')}
 
 🩹 Rawatan:
+Rawatan: ${f('f-treatment')}
 Perawat: ${f('f-caregiver')}
 Mula: ${f('f-treatment-start')}
 Tamat: ${f('f-treatment-end')}
 Tempoh: ${f('f-treatment-duration')}
-Rawatan: ${f('f-treatment')}
+
 
 📌 Status: ${f('f-status')}
 
-— Resq-Link
+Laporan dihanta melalui sistem— Resq-Link Amal
 `.trim();
 
     window.open(
