@@ -171,8 +171,9 @@
         </div>
     </script>
 
-    <!-- Template: Reporter -->
+    <!-- Template: Reporte
     <script src="/resQ_amal/script.js"></script>
+    r -->
     <script type="text/html" id="tpl-reporter">
         <main class="max-w-xl mx-auto p-4 space-y-5 animate-in">
             <div class="bg-blue-600/10 border border-blue-100 p-4 rounded-3xl flex items-center justify-between">
@@ -504,32 +505,14 @@ class="w-full bg-emerald-600 text-white font-extrabold py-4 rounded-[2rem] upper
             }, 50);
         };
 
-        window.saveCase = () => {
-            const p = document.getElementById('f-patient').value;
-            if(!p) return window.showToast("Nama Pesakit Wajib");
+        
             
-            const caseData = {
-                id: 'C-' + Date.now(),
-                patientName: p, 
-                timeStr: document.getElementById('f-time').value,
-                checkpoint: session.checkpoint, 
-                responderName: session.responderName,
-                vitals: { 
-                    bp: document.getElementById('f-bp').value, 
-                    pr: document.getElementById('f-pr').value, 
-                    spo2: document.getElementById('f-spo2').value, 
-                    bsl: document.getElementById('f-bsl').value 
-                },
-                complaint: document.getElementById('f-complaint').value
-            };
-
+            
+        
             allCases.unshift(caseData);
             saveAll();
             window.showToast("Kes Disimpan ke Storage");
-            document.getElementById('f-patient').value = "";
-            document.getElementById('f-complaint').value = "";
-            window.render();
-        };
+            
 
         window.executeDutyExit = () => {
             const shiftIdx = allShifts.findIndex(s => s.id === session.id);
@@ -639,7 +622,6 @@ class="w-full bg-emerald-600 text-white font-extrabold py-4 rounded-[2rem] upper
             document.getElementById('f-bp').value = "120/80";
             document.getElementById('f-pr').value = "75";
             document.getElementById('f-spo2').value = "99%";
-            document.getElementById('f-bsl').value = "5.5";
             document.getElementById('f-complaint').value = "Luka ringan di lutut.";
         };
 
@@ -715,7 +697,7 @@ window.calculateTreatmentDuration = () => {
 window.saveCase = () => {
     const data = {
         id: 'C-' + Date.now(),
-
+if(!p) return window.showToast("Nama Pesakit Wajib");
         program: {
             responderIC: f('f-responder-ic'),
             responderName: f('f-responder-name'),
