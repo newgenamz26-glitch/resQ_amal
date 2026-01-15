@@ -640,7 +640,7 @@ class="w-full bg-emerald-600 text-white font-extrabold py-4 rounded-[2rem] upper
  <script>
 (async () => {
   try {
-    const res = await fetch('/resQ_amal/update.json?ts=' + Date.now());
+    const res = await fetch('/update.json?ts=' + Date.now());
     if (!res.ok) return;
 
     const data = await res.json();
