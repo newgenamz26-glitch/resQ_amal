@@ -533,20 +533,37 @@ class="w-full bg-emerald-600 text-white font-extrabold py-4 rounded-[2rem] upper
                 window.renderResponderCases();
             }
         };
-
         window.renderResponderCases = () => {
-            const list = document.getElementById('responder-case-list');
-            const myCases = allCases.filter(c => c.program.responderName === session.responderName);
-            list.innerHTML = myCases.map(c => `
-                <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex justify-between items-center">
+               const list = document.getElementById('responder-case-list');
+                  if (!list) return;
+                    const myCases = allCases.filter(c =>
+                       c.program?.responderName === session?.responderName
+                  );
+                  if (myCases.length === 0) {
+                      list.innerHTML = `
+                       <div class="text-center p-10 text-slate-400 font-bold uppercase text-[10px]">
+                         Tiada rekod kes dilaporkan 
+                       </div>`;
+                    return;
+                    }
+                list.innerHTML = myCases.map(c => `
+                   <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex justify-between items-center">
                     <div>
-                        <p class="text-[9px] font-black text-blue-500 uppercase">${c.createdAt}</p>
-                        <h5 class="font-extrabold uppercase text-slate-800">${c.patient.name}</h5>
-                    </div>
-                    <button onclick="window.viewCaseDetail('${c.id}')" class="bg-blue-600 text-white text-[9px] font-black px-4 py-2 rounded-xl uppercase">Detail</button>
-                </div>`).join('') || '<div class="text-center p-10 text-slate-400 font-bold uppercase text-[10px]">Tiada rekod kes</div>';
-        };
-
+                       <p class="text-[9px] font-black text-blue-500 uppercase">
+                          ${new Date(c.createdAt).toLocaleString('ms-MY')}
+                        </p>
+                            <h5 class="font-extrabold uppercase text-slate-800">
+                                ${c.patient?.name || '-'}
+                             </h5>
+                      </div>
+                             <button
+                                    onclick="window.viewCaseDetail('${c.id}')"
+                                   class="bg-blue-600 text-white text-[9px] font-black px-4 py-2 rounded-xl uppercase">
+                Detail
+                              </button>
+                      </div>
+    `).join('');
+};      
         window.viewCaseDetail = (id) => {
             const c = allCases.find(item => item.id === id);
             if(!c) return;
