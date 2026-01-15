@@ -507,11 +507,7 @@ class="w-full bg-emerald-600 text-white font-extrabold py-4 rounded-[2rem] upper
         };
             
         
-            allCases.unshift(caseData);
-            saveAll();
-            window.showToast("Kes Disimpan ke Storage");
-            
-
+    
         window.executeDutyExit = () => {
             const shiftIdx = allShifts.findIndex(s => s.id === session.id);
             if(shiftIdx > -1) {
